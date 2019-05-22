@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -10,12 +11,9 @@ import (
 	"github.com/gorilla/mux"
 )
 
-type RespSuccessData struct {
-	Token string `json:token`
-}
-
 type RespMessageData struct {
-	Error respErrorMessage `json:"error,omitempty"`
+	Token string            `json:"token,omitempty"`
+	Error *respErrorMessage `json:"error,omitempty"`
 }
 
 type respErrorMessage struct {
@@ -58,12 +56,29 @@ func signUp(w http.ResponseWriter, r *http.Request) {
 	w.Write(ResponseSuccess(tokenString))
 }
 
-func login(w http.ResponseWriter, r *http.Request) {}
+func login(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseMultipartForm(32); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(ResponseError(http.StatusInternalServerError, "Internal error"))
+		return
+	}
+
+	tokenString := r.Header.Get("Authorization")
+	if tokenString != "" {
+		if token.TokenVerify(tokenString, r.FormValue("email")) {
+			fmt.Println("token verify")
+			return
+		}
+	}
+
+	w.WriteHeader(http.StatusForbidden)
+	return
+}
 
 func logout(w http.ResponseWriter, r *http.Request) {}
 
 func ResponseError(errorCode int, message string) []byte {
-	resp, err := json.Marshal(RespMessageData{Error: respErrorMessage{Code: errorCode, Message: message}})
+	resp, err := json.Marshal(RespMessageData{Error: &respErrorMessage{Code: errorCode, Message: message}})
 	if err != nil {
 		log.Println(err)
 		return nil
@@ -73,7 +88,7 @@ func ResponseError(errorCode int, message string) []byte {
 }
 
 func ResponseSuccess(data string) []byte {
-	resp, err := json.Marshal(&RespSuccessData{Token: data})
+	resp, err := json.Marshal(RespMessageData{Token: data})
 	if err != nil {
 		log.Println(err)
 		return nil
