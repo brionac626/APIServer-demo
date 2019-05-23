@@ -10,10 +10,10 @@ import (
 const secretKey = "demoService"
 
 func NewToken(email string) (string, error) {
-	t := time.Now()
+	t := time.Now().UTC()
 	token := jwt.NewWithClaims(jwt.SigningMethodHS512, jwt.MapClaims{
-		"iat":   t,
-		"exp":   t.Add(time.Hour * 1),
+		"iat":   t.Unix(),
+		"exp":   t.Add(time.Hour * 1).Unix(),
 		"email": email,
 	})
 
