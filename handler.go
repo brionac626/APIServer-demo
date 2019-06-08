@@ -6,7 +6,7 @@ import (
 	"log"
 	"net/http"
 
-	"APIserver_demo/token"
+	"github.com/brionac626/APIserver-demo/token"
 
 	"github.com/gorilla/mux"
 )
